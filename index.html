@@ -1,0 +1,303 @@
+<!--Julio keiti Utsunomiya 201032-->
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <title>Babylon.js sample code</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+    <script src="https://preview.babylonjs.com/ammo.js"></script>
+    <script src="https://preview.babylonjs.com/cannon.js"></script>
+    <script src="https://preview.babylonjs.com/Oimo.js"></script>
+    <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+    <script src="https://preview.babylonjs.com/babylon.js"></script>
+    <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+    <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+    <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+    <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+    <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+    <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+    <script src="Meshes.js"></script> 
+    <script src="Hero.js"></script>
+    <script src="Barril.js"></script>
+    <script src="Coletar.js"></script>
+
+    <style>
+        html,
+        body {
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+
+        #renderCanvas {
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="renderCanvas"></canvas>
+    <script>
+
+        var canvas = document.getElementById("renderCanvas");
+        var engine = null;
+        var scene = null;
+        var sceneToRender = null;
+        var spheres = [];
+        var bar;
+        var player;
+        var isGameover = false;
+    
+        var createDefaultEngine = function () { return new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true, disableWebGL2Support: false }); };
+        const createScene = function () {
+            scene = new BABYLON.Scene(engine);
+
+            var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+            var instructions = new BABYLON.GUI.TextBlock();
+            instructions.text = "Mover 'WASD'  Dance 'B'  Julio Keiti Utsunomiya - RA:201032";
+            instructions.color = "white";
+            instructions.fontSize = 16;
+            instructions.textHorizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_RIGHT
+            instructions.textVerticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM
+            advancedTexture.addControl(instructions);
+
+            var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene);
+            var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
+            skyboxMaterial.backFaceCulling = false;
+            skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("textures/skybox4", scene);
+            skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+            skyboxMaterial.disableLighting = true;
+	        skybox.material = skyboxMaterial;	
+
+            var ground = BABYLON.MeshBuilder.CreateDisc("ground", {radius: 20}, scene);
+            var groundMaterial = new BABYLON.StandardMaterial("groundMaterial", scene);
+            groundMaterial.diffuseTexture = new BABYLON.Texture("textures/wood.jpg", scene);
+            groundMaterial.diffuseTexture.uScale = 30;
+            groundMaterial.diffuseTexture.vScale = 30;
+            groundMaterial.specularColor = new BABYLON.Color3(.1, .1, .1);
+            ground.material = groundMaterial;
+            ground.rotation.x = Math.PI / 2;
+            ground.position.y = -2;
+
+            const largeGroundMat = new BABYLON.StandardMaterial("largeGroundMat");
+            largeGroundMat.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/environments/valleygrass.png");
+    
+            const largeGround = BABYLON.MeshBuilder.CreateGroundFromHeightMap("largeGround", "https://assets.babylonjs.com/environments/villageheightmap.png", {width:170, height:170, subdivisions: 20, minHeight:0, maxHeight: 5});
+            largeGround.material = largeGroundMat;
+            largeGround.position.y = -2.1;
+
+
+            BABYLON.SceneLoader.ImportMesh( "","https://models.babylonjs.com/Georgia-Tech-Dragon/","dragon.babylon",scene,function (newMeshes)
+            {
+
+                var Mashe1 = newMeshes[0];
+         
+                Mashe1.scaling.scaleInPlace(5);
+                Mashe1.position.z = 10;
+                Mashe1.position.y = -2;
+
+            });
+
+            BABYLON.SceneLoader.ImportMesh( "","https://models.babylonjs.com/Georgia-Tech-Dragon/","dragon.glb",scene,function (newMeshes)
+            {
+
+                var Mashe2 = newMeshes[0];
+         
+                Mashe2.scaling.scaleInPlace(5);
+                Mashe2.position.z = 12;
+                Mashe2.position.y = -2;
+
+            });
+
+            BABYLON.SceneLoader.ImportMesh( "","https://models.babylonjs.com/", "alien.glb",scene,function (newMeshes)
+            {
+
+                var Mashe3 = newMeshes[0];
+         
+                Mashe3.scaling.scaleInPlace(1);
+                Mashe3.position.z = 14;
+                Mashe3.position.y = -1.5;
+
+            });
+
+            BABYLON.SceneLoader.ImportMesh( "", "https://models.babylonjs.com/Lee-Perry-Smith-Head/","head.babylon",scene,function (newMeshes)
+            {
+
+                var Mashe4 = newMeshes[0];
+         
+                Mashe4.scaling.scaleInPlace(2);
+                Mashe4.position.z = 16;
+                Mashe4.position.y = -2;
+
+            });
+
+
+            BABYLON.SceneLoader.ImportMesh( "", "https://models.babylonjs.com/Lee-Perry-Smith-Head/","head.glb",scene,function (newMeshes)
+            {
+
+                var Mashe5 = newMeshes[0];
+         
+                Mashe5.scaling.scaleInPlace(2);
+                Mashe5.position.z = 8;
+                Mashe5.position.y = -2;
+
+            });
+
+            BABYLON.SceneLoader.ImportMesh( "", "https://models.babylonjs.com/", "ufo.glb",scene,function (newMeshes)
+            {
+
+                var Mashe6 = newMeshes[0];
+         
+                Mashe6.scaling.scaleInPlace(1);
+                Mashe6.position.z = 6;
+                Mashe6.position.y = -2;
+
+            });
+
+            BABYLON.SceneLoader.ImportMesh( "", "https://models.babylonjs.com/", "toast_acrobatics.glb",scene,function (newMeshes) {    
+                      
+            var Mashe7 = newMeshes[0];
+            Mashe7.scaling.scaleInPlace(3);
+            Mashe7.position.z = 4;
+            Mashe7.position.y = -2;
+
+            });
+
+
+            cammera = createLightAndCamera();
+
+            function createLightAndCamera () { 
+            const camera = new BABYLON.ArcRotateCamera("camera", Math.PI / 2, Math.PI / 4, 10, new BABYLON.Vector3(0, -5, 0));
+            camera.attachControl(canvas, true);
+
+            scene.activeCamera = camera;
+            camera.lowerRadiusLimit = 2;
+            camera.upperRadiusLimit = 10;
+            camera.wheelDeltaPercentage = 0.01;
+            const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 1, 0));
+            return camera;
+        }
+
+
+           createLimit(100);
+                   
+           createGameObjects();
+           player = new Hero(cammera,scene,bar,spheres);
+           
+           scene.onAfterRenderObservable.add(() => {
+                let i = player.getIndex();
+                if(i == 10) {
+                    var advancedTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateFullscreenUI("UI");
+                    var button = BABYLON.GUI.Button.CreateSimpleButton("botao", "Reiniciar - Pontuação: " + i);
+                    button.width = "350px"
+                    button.height = "100px";
+                    button.color = "white";
+                    button.cornerRadius = 20;
+                    button.background = "Black";
+                    button.top = 10;
+                    button.left = 40;
+                    advancedTexture.addControl(button);
+                    button.onPointerUpObservable.add(function() {
+                        player.setHeroPos();
+                        isGameover = true;
+                        player.setIndex(0);
+                        button.dispose();
+                        destBarrel = player.getBarrelDest();
+                    });
+                }
+                if(isGameover==true){
+                    isGameover=false;
+                    createGameObjects();
+                }
+           });
+
+   
+            
+            return scene;
+        };
+
+        function createLimit() {
+            cylinderScl = new BABYLON.Vector3( -40,-2, -40);
+            var cylinder = BABYLON.MeshBuilder.CreateCylinder("cylinder", {height:1});
+            cylinder.scaling = cylinderScl;
+            cylinder.checkCollisions = true;
+            cylinder.visibility = 0;
+            cylinder.position.y = -2;
+        }
+        
+        function createGameObjects()
+        {
+            
+            barRot = new BABYLON.Vector3(0, 0 , 0);
+            barPos = new BABYLON.Vector3(-1, -2, 0);
+            barScl =  new BABYLON.Vector3(0.01,0.01,0.01);
+            bar = new Barril ("https://models.babylonjs.com/", "ExplodingBarrel.glb", barPos, barRot, barScl,0);
+        
+            spheres = createCollectibles();
+        }
+
+
+        function createCollectibles() {
+            var p = 1;
+            var pa = 0;
+            var s = 1;
+            let array = [];
+            for(var i=0;i<10;i++)
+            {
+                var tpos = new BABYLON.Vector3(p, -1.6, pa);
+                var tscale =  new BABYLON.Vector3(2,2,2);
+                var trot =  new BABYLON.Vector3(0,0,0);
+
+                var ball = new Coletar(i, "https://models.babylonjs.com/", "emoji_heart.glb", tpos, trot, tscale, 0)
+                
+                array.push(ball);
+
+                p+=1.50;
+                s+=0.25;
+
+            }
+            return array;
+        }
+
+        var engine;
+        var scene;
+        initFunction = async function () {
+            var asyncEngineCreation = async function () {
+                try {
+                    return createDefaultEngine();
+                } catch (e) {
+                    console.log("the available createEngine function failed. Creating the default engine instead");
+                    return createDefaultEngine();
+                }
+            }
+
+            engine = await asyncEngineCreation();
+            if (!engine) throw 'engine should not be null.';
+            scene = createScene();
+        };
+        initFunction().then(() => {
+            sceneToRender = scene
+            engine.runRenderLoop(function () {
+                if (sceneToRender && sceneToRender.activeCamera) {
+                    sceneToRender.render();
+                }
+            });
+        });
+        
+        window.addEventListener("resize", function () {
+            engine.resize();
+        });
+
+
+    </script>
+</body>
+
+</html>
